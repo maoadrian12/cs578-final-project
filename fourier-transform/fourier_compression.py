@@ -194,45 +194,81 @@ def run_comparison():
 
 def create_visualization(original, results_low, results_thresh, image_name):
     """Create comparison plots for the results"""
-    fig, axes = plt.subplots(2, 3, figsize=(15, 10))
-    fig.suptitle(f'Fourier Transform Compression - {image_name}', fontsize=16)
     
-    # Original image
-    axes[0,0].imshow(original, cmap='gray')
-    axes[0,0].set_title('Original Image')
-    axes[0,0].axis('off')
+    # Create separate figures for each method
     
-    # Low-frequency compression examples
-    for i, level_idx in enumerate([0, 2, 4]):  # Show low, medium, high compression
-        result = results_low[level_idx]
-        axes[0,i+1].imshow(result['image'], cmap='gray')
-        axes[0,i+1].set_title(f'Low-Freq: {result["level"]*100:.1f}%\nPSNR: {result["psnr"]:.1f} dB')
-        axes[0,i+1].axis('off')
+    # Figure 1: Low-frequency compression results (the one that works well)
+    fig1, axes1 = plt.subplots(2, 3, figsize=(15, 10))
+    fig1.suptitle(f'Low-Frequency Fourier Compression - {image_name}', fontsize=16)
     
-    # Threshold compression examples
-    for i, level_idx in enumerate([0, 2, 4]):
-        result = results_thresh[level_idx]
-        axes[1,i].imshow(result['image'], cmap='gray')
-        axes[1,i].set_title(f'Threshold: {result["level"]:.2f}\nPSNR: {result["psnr"]:.1f} dB')
-        axes[1,i].axis('off')
+    # Row 1: Original and compressed images
+    axes1[0,0].imshow(original, cmap='gray')
+    axes1[0,0].set_title('Original Image')
+    axes1[0,0].axis('off')
     
-    # Metrics comparison plot
-    axes[1,2].clear()
+    # Show 2 compression levels instead of 3
+    display_indices = [0, 2]  # Just show 2 examples: low and medium compression
+    for i, idx in enumerate(display_indices):
+        result = results_low[idx]
+        axes1[0,i+1].imshow(result['image'], cmap='gray')
+        axes1[0,i+1].set_title(f'Keep {result["level"]*100:.1f}%\nPSNR: {result["psnr"]:.1f} dB')
+        axes1[0,i+1].axis('off')
+    
+    # Leave the last spot in row 1 empty or show FFT
+    fft_original = fftshift(fft2(original))
+    axes1[0,2].imshow(np.log(1 + np.abs(fft_original)), cmap='viridis')
+    axes1[0,2].set_title('Original FFT (log scale)')
+    axes1[0,2].axis('off')
+    
+    # Row 2: Metrics plots
     levels = [r['level'] for r in results_low]
     psnr_low = [r['psnr'] for r in results_low]
-    psnr_thresh = [r['psnr'] for r in results_thresh]
+    comp_ratios = [r['comp_ratio'] for r in results_low]
+    mse_values = [r['mse'] for r in results_low]
     
-    axes[1,2].plot(levels, psnr_low, 'o-', label='Low-Frequency')
-    axes[1,2].plot(levels, psnr_thresh, 's-', label='Threshold')
-    axes[1,2].set_xlabel('Compression Level')
-    axes[1,2].set_ylabel('PSNR (dB)')
-    axes[1,2].set_title('Quality Comparison')
-    axes[1,2].legend()
-    axes[1,2].grid(True)
+    # Plot 1: PSNR vs Compression Level
+    axes1[1,0].plot(levels, psnr_low, 'bo-', linewidth=2, markersize=8)
+    axes1[1,0].set_xlabel('Keep Fraction')
+    axes1[1,0].set_ylabel('PSNR (dB)')
+    axes1[1,0].set_title('Quality vs Compression Level')
+    axes1[1,0].grid(True)
+    
+    # Plot 2: PSNR vs Compression Ratio
+    axes1[1,1].plot(comp_ratios, psnr_low, 'ro-', linewidth=2, markersize=8)
+    axes1[1,1].set_xlabel('Compression Ratio')
+    axes1[1,1].set_ylabel('PSNR (dB)')
+    axes1[1,1].set_title('Quality vs Compression Ratio')
+    axes1[1,1].grid(True)
+    
+    # Plot 3: MSE vs Compression Level
+    axes1[1,2].plot(levels, mse_values, 'go-', linewidth=2, markersize=8)
+    axes1[1,2].set_xlabel('Keep Fraction')
+    axes1[1,2].set_ylabel('MSE')
+    axes1[1,2].set_title('Error vs Compression Level')
+    axes1[1,2].grid(True)
     
     plt.tight_layout()
-    plt.savefig(f'fourier_results_{image_name}.png', dpi=150, bbox_inches='tight')
+    plt.savefig(f'low_freq_results_{image_name}.png', dpi=150, bbox_inches='tight')
     plt.show()
+    
+    # Optional: Create a simple threshold visualization if you want to see it
+    if len(results_thresh) > 0:
+        fig2, axes2 = plt.subplots(1, 2, figsize=(10, 4))
+        fig2.suptitle(f'Threshold Method Examples - {image_name}', fontsize=14)
+        
+        # Show worst and best of threshold method
+        if len(results_thresh) >= 2:
+            axes2[0].imshow(results_thresh[0]['image'], cmap='gray')
+            axes2[0].set_title(f'Thresh: {results_thresh[0]["level"]:.2f}\nPSNR: {results_thresh[0]["psnr"]:.1f} dB')
+            axes2[0].axis('off')
+            
+            axes2[1].imshow(results_thresh[-1]['image'], cmap='gray')
+            axes2[1].set_title(f'Thresh: {results_thresh[-1]["level"]:.2f}\nPSNR: {results_thresh[-1]["psnr"]:.1f} dB')
+            axes2[1].axis('off')
+        
+        plt.tight_layout()
+        plt.savefig(f'threshold_results_{image_name}.png', dpi=150, bbox_inches='tight')
+        plt.show()
 
 if __name__ == "__main__":
     print("Fourier Transform Image Compression Analysis")
