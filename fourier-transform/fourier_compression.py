@@ -137,7 +137,8 @@ def run_comparison():
         return
     
     # Test different compression levels
-    compression_levels = [0.01, 0.05, 0.1, 0.2, 0.3]
+    # compression_levels = [0.01, 0.05, 0.1, 0.2, 0.3]
+    compression_levels = [0.1, 0.2, 0.3, 0.4, 0.5]  # Keep 10-50% of data
     
     for image_name, original_image in test_images.items():
         print(f"\n{'='*50}")
