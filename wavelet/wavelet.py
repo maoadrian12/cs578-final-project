@@ -62,7 +62,6 @@ def run_experiment(image_folder):
     # Note: Update valid extensions if your files are different
     files = glob.glob(os.path.join(image_folder, "*.jpg")) + \
             glob.glob(os.path.join(image_folder, "*.png"))
-    
     output_dir = "compressed_samples"
     os.makedirs(output_dir, exist_ok=True)
     
@@ -114,7 +113,7 @@ def run_experiment(image_folder):
 
 # --- 3. Execution and Plotting ---
 
-folder_path = "images/test/" 
+folder_path = "../images/test/" 
 
 rates, mses = run_experiment(folder_path)
 
